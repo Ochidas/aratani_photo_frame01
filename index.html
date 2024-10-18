@@ -32,13 +32,39 @@
             height: 100%;
             pointer-events: none;
         }
+        #capture {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #snapshot {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
     <video id="camera" autoplay playsinline></video>
     <img id="frame" src="overlay_frame.png" alt="Frame">
+    <canvas id="snapshot"></canvas>
+    <button id="capture">Capture</button>
     <script>
         const video = document.getElementById('camera');
+        const snapshot = document.getElementById('snapshot');
+        const captureButton = document.getElementById('capture');
+        const frame = document.getElementById('frame');
 
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
@@ -48,6 +74,23 @@
                 console.error('Error accessing camera: ', err);
                 alert('カメラにアクセスできません');
             });
+
+        captureButton.addEventListener('click', () => {
+            const context = snapshot.getContext('2d');
+            snapshot.width = video.videoWidth;
+            snapshot.height = video.videoHeight;
+
+            // ビデオの内容をキャンバスに描画
+            context.drawImage(video, 0, 0, snapshot.width, snapshot.height);
+
+            // フレームの内容をキャンバスに重ねて表示
+            const frameImage = new Image();
+            frameImage.src = frame.src;
+            frameImage.onload = () => {
+                context.drawImage(frameImage, 0, 0, snapshot.width, snapshot.height);
+                snapshot.style.display = 'block';
+            };
+        });
     </script>
 </body>
 </html>
