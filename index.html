@@ -53,17 +53,22 @@
             object-fit: cover;
             z-index: 2;
         }
+        a#download {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <video id="camera" autoplay playsinline></video>
     <img id="frame" src="overlay_frame.png" alt="Frame">
     <canvas id="snapshot"></canvas>
-    <button id="capture">Capture</button>
+    <button id="capture">撮影</button>
+    <a id="download" download="captured_image.png">Save Image</a>
     <script>
         const video = document.getElementById('camera');
         const snapshot = document.getElementById('snapshot');
         const captureButton = document.getElementById('capture');
+        const downloadLink = document.getElementById('download');
         const frame = document.getElementById('frame');
 
         navigator.mediaDevices.getUserMedia({ video: true })
@@ -89,6 +94,13 @@
             frameImage.onload = () => {
                 context.drawImage(frameImage, 0, 0, snapshot.width, snapshot.height);
                 snapshot.style.display = 'block';
+
+                // キャンバスから画像データURLを生成し、ダウンロードリンクを設定
+                const dataURL = snapshot.toDataURL('image/png');
+                downloadLink.href = dataURL;
+                downloadLink.style.display = 'block';
+                downloadLink.click();
+                downloadLink.style.display = 'none';
             };
         });
     </script>
