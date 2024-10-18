@@ -64,14 +64,36 @@
     <canvas id="snapshot"></canvas>
     <button id="capture">撮影</button>
     <a id="download" download="captured_image.png">Save Image</a>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-storage.js"></script>
     <script>
+        // Your web app's Firebase configuration
+        var firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const storage = firebase.storage();
+
         const video = document.getElementById('camera');
         const snapshot = document.getElementById('snapshot');
         const captureButton = document.getElementById('capture');
         const downloadLink = document.getElementById('download');
         const frame = document.getElementById('frame');
 
-        navigator.mediaDevices.getUserMedia({ video: true })
+        // アウトカメラを使用するためのメディアストリーム制約
+        const constraints = {
+            video: {
+                facingMode: 'environment'
+            }
+        };
+
+        navigator.mediaDevices.getUserMedia(constraints)
             .then(stream => {
                 video.srcObject = stream;
             })
@@ -101,6 +123,27 @@
                 downloadLink.style.display = 'block';
                 downloadLink.click();
                 downloadLink.style.display = 'none';
+
+                // Firebase Storageに画像をアップロード
+                snapshot.toBlob(blob => {
+                    const storageRef = storage.ref(`images/${Date.now()}.png`);
+                    const uploadTask = storageRef.put(blob);
+
+                    uploadTask.on('state_changed',
+                        (snapshot) => {
+                            var progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                            console.log('Upload is ' + progress + '% done');
+                        },
+                        (error) => {
+                            console.error('Upload failed:', error);
+                        },
+                        () => {
+                            uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                                console.log('File available at', downloadURL);
+                                alert('画像がFirebaseストレージに保存されました');
+                            });
+                        });
+                }, 'image/png');
             };
         });
     </script>
